@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"slices"
 )
 
 // Student struct
@@ -96,6 +97,19 @@ func updateStudent(c *gin.Context) {
 
 }
 
+func deleteStudent(c *gin.Context){
+	id := c.Param("id")
+
+	for i, student := range students {
+		if student.ID == id {
+			students = slices.Delete(students, i, i+1)
+			c.JSON(http.StatusOK, gin.H{"message": "student delete sussessfully"})
+			return
+		}
+	}
+	c.JSON(http.StatusNotFound, gin.H{"message": "student delete not found"})
+}
+
 func main() {
 	r := gin.Default()
 
@@ -109,7 +123,7 @@ func main() {
 		api.GET("/students/:id", getStudent)
 		api.POST("/students/", createStudent)
 		api.PUT("/student/:id", updateStudent)
-		// api.DELETE("/students/:id", deleteStudent)
+		api.DELETE("/students/:id", deleteStudent)
 	}
 
 	r.Run(":8080")
