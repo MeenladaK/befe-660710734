@@ -17,7 +17,10 @@ const docTemplate = `{
     "paths": {
         "/books": {
             "get": {
-                "description": "List all books (optional filter by ?year=YYYY)",
+                "description": "Get all books or filter by year\nGet details of specific book",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -33,6 +36,12 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/main.Book"
                             }
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/main.ErrorResponse"
                         }
                     },
                     "500": {
@@ -91,6 +100,9 @@ const docTemplate = `{
         "/books/new": {
             "get": {
                 "description": "Get latest books ordered by created date",
+                "consumes": [
+                    "application/json"
+                ],
                 "produces": [
                     "application/json"
                 ],
@@ -98,6 +110,14 @@ const docTemplate = `{
                     "Books"
                 ],
                 "summary": "Get new books",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Number of books to return (default 5)",
+                        "name": "limit",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",

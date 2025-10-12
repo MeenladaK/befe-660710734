@@ -33,7 +33,11 @@ info:
 paths:
   /books:
     get:
-      description: List all books (optional filter by ?year=YYYY)
+      consumes:
+      - application/json
+      description: |-
+        Get all books or filter by year
+        Get details of specific book
       produces:
       - application/json
       responses:
@@ -43,6 +47,10 @@ paths:
             items:
               $ref: '#/definitions/main.Book'
             type: array
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/main.ErrorResponse'
         "500":
           description: Internal Server Error
           schema:
@@ -174,7 +182,14 @@ paths:
       - Books
   /books/new:
     get:
+      consumes:
+      - application/json
       description: Get latest books ordered by created date
+      parameters:
+      - description: Number of books to return (default 5)
+        in: query
+        name: limit
+        type: integer
       produces:
       - application/json
       responses:
