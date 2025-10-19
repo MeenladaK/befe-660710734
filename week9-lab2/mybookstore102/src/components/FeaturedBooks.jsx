@@ -2,57 +2,48 @@ import React, { useState, useEffect } from 'react';
 import BookCard from './BookCard';
 
 const FeaturedBooks = () => {
-  // กำหนด State สำหรับจัดการข้อมูล
   const [featuredBooks, setFeaturedBooks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    const fetchBooks = async () => {
+    const controller = new AbortController();
+
+    (async () => {
       try {
         setLoading(true);
-        
-        // เรียก API เพื่อดึงข้อมูลหนังสือ
-       const response = await fetch(`${process.env.REACT_APP_API_URL}/api/v1/books`);
 
-        if (!response.ok) {
-          throw new Error('Failed to fetch books');
-        }
+        // ใช้ .env + fallback และตัด / ท้าย URL กันพัง
+        const raw = process.env.REACT_APP_API_URL || 'http://localhost:8080';
+        const apiUrl = raw.replace(/\/+$/, '');
 
-        const data = await response.json();
+        const res = await fetch(`${apiUrl}/api/v1/books`, { signal: controller.signal });
+        if (!res.ok) throw new Error(`Failed to fetch books (${res.status})`);
 
-        // สุ่มหนังสือ 3 เล่ม
-        const shuffled = [...data].sort(() => 0.5 - Math.random());
-        const selected = shuffled.slice(0, 3);
+        const data = await res.json();
 
+        // สุ่ม 3 เล่ม
+        const selected = [...data].sort(() => 0.5 - Math.random()).slice(0, 3);
         setFeaturedBooks(selected);
         setError(null);
-        
-      } catch (err) {
-        setError(err.message);
-        console.error('Error fetching books:', err);
-        
+      } catch (e) {
+        if (e.name !== 'AbortError') setError(e.message);
       } finally {
         setLoading(false);
       }
-    };
+    })();
 
-    // เรียกใช้ฟังก์ชันดึงข้อมูล
-    fetchBooks();
-  }, []); // [] = dependency array ว่าง = รันครั้งเดียว
+    return () => controller.abort();
+  }, []);
 
-  // กรณีกำลังโหลดข้อมูล
   if (loading) {
     return (
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-        <div className="text-center py-8 col-span-full">
-          Loading...
-        </div>
+        <div className="text-center py-8 col-span-full">Loading...</div>
       </div>
     );
   }
 
-  // กรณีเกิดข้อผิดพลาด
   if (error) {
     return (
       <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -63,14 +54,20 @@ const FeaturedBooks = () => {
     );
   }
 
-  // กรณีแสดงผลข้อมูลปกติ
+  if (featuredBooks.length === 0) {
+    return (
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+        <div className="text-center py-8 col-span-full text-gray-600">
+          ยังไม่มีหนังสือแนะนำ
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-      {featuredBooks.map(book => (
-        <BookCard 
-          key={book.id} 
-          book={book} 
-        />
+      {featuredBooks.map((book) => (
+        <BookCard key={book.id} book={book} />
       ))}
     </div>
   );
